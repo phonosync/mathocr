@@ -20,6 +20,8 @@ Usage:
   math-ocr --paste                      # read image from clipboard (e.g. after
                                         # Cmd+Ctrl+Shift+4 screenshot)
   math-ocr *.png --engine claude --full # full transcription (text + math)
+  math-ocr --watch --engine claude      # interactive loop: paste screenshot,
+                                        # press Enter to process; Ctrl+C to quit
 """
 
 import argparse
@@ -139,6 +141,59 @@ def ocr_claude(img, full_page: bool = False) -> str:
 
 # ------------------------------------------------------------------ main
 
+def _watch_loop(args):
+    engine_label = args.engine + (" --full" if args.full else "")
+    print(f"math-ocr watch mode  [engine: {engine_label}]", file=sys.stderr)
+    print("Copy a screenshot to the clipboard, then press Enter.", file=sys.stderr)
+    print("Press Ctrl+C to quit.\n", file=sys.stderr)
+
+    # Warm up the local model once so the first real run is fast.
+    if args.engine == "local":
+        print("Loading local model...", end=" ", flush=True, file=sys.stderr)
+        from PIL import Image
+        dummy = Image.new("RGB", (64, 64), color="white")
+        try:
+            ocr_local(dummy)
+        except Exception:
+            pass
+        print("ready.", file=sys.stderr)
+
+    while True:
+        try:
+            input("[ press Enter to process clipboard ] ")
+        except EOFError:
+            break
+        except KeyboardInterrupt:
+            print("\nBye.", file=sys.stderr)
+            return
+
+        try:
+            img = image_from_clipboard()
+        except SystemExit:
+            continue  # image_from_clipboard already printed the error
+
+        try:
+            if args.engine == "claude":
+                latex = ocr_claude(img, full_page=args.full)
+            else:
+                latex = ocr_local(img)
+        except SystemExit:
+            continue
+
+        if args.delimiters == "inline":
+            latex = f"${latex}$"
+        elif args.delimiters == "display":
+            latex = f"$$\n{latex}\n$$"
+
+        print(latex)
+
+        if args.clipboard:
+            copy_to_clipboard(latex)
+            print("(copied to clipboard)", file=sys.stderr)
+
+        print(file=sys.stderr)
+
+
 def main():
     p = argparse.ArgumentParser(
         prog="math-ocr",
@@ -157,13 +212,19 @@ def main():
     p.add_argument("-d", "--delimiters", choices=["none", "inline", "display"],
                    default="none",
                    help="wrap result in $...$ or $$...$$ (default: none)")
+    p.add_argument("--watch", action="store_true",
+                   help="interactive loop: press Enter to process clipboard, Ctrl+C to quit")
     args = p.parse_args()
 
     if args.full and args.engine != "claude":
         die("--full requires --engine claude")
-    if not args.images and not args.paste:
+    if not args.images and not args.paste and not args.watch:
         p.print_help()
         sys.exit(2)
+
+    if args.watch:
+        _watch_loop(args)
+        return
 
     images = []
     if args.paste:
