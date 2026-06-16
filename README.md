@@ -68,7 +68,7 @@ alias snip2tex="$HOME/projects/mathocr/math_ocr.py --paste -c --watch"
 ## Engine guidance
 
 |                       | local (pix2text) | claude                            |
-|----------------------|------------------|---------------------------------|
+|----------------------|------------------|--------------------------------|
 | Printed equations     | very good        | excellent                         |
 | Handwriting           | weak             | very good                         |
 | Full pages (`--full`) | –                | yes                               |
@@ -79,13 +79,13 @@ Default model for the Claude engine is `claude-sonnet-4-6`; override with `MATH_
 ## Dependencies
 
 | Package | Role | License | Link |
-|---------|------|---------|------|
-| [pix2text](https://github.com/breezedeus/pix2text) | Local OCR engine (MFR model) for printed equations | MIT | https://github.com/breezedeus/pix2text |
+|--------------------|-----------------|--------------------|-----------------|
+| [pix2text](https://github.com/breezedeus/pix2text) by [breezedeus](https://github.com/breezedeus) | Local OCR engine (MFR model) for mixed text and math in images pretrained on rendered LaTeX equations | MIT | https://github.com/breezedeus/pix2text |
 | [anthropic](https://github.com/anthropics/anthropic-sdk-python) | Claude API client for the cloud engine | MIT | https://github.com/anthropics/anthropic-sdk-python |
 | [Pillow](https://python-pillow.org) | Image loading and clipboard access | MIT-CMU (MIT-compatible) | https://pillow.readthedocs.io |
 
 All dependencies are MIT-licensed, imposing no restrictions beyond attribution. This project is released under the [MIT License](LICENSE).
 
-### pix2text
+## AI disclosure
 
-[pix2text](https://github.com/breezedeus/pix2text) by [breezedeus](https://github.com/breezedeus) is a Python library for recognizing mixed text and math in images. It uses the **MFR** (Math Formula Recognition) model, pretrained on millions of rendered LaTeX equations. On first run it downloads ~100 MB of model weights to a local cache; all subsequent inference is fully offline.
+This tool was developed with the assistance of [Claude Code](https://claude.ai/code) (Anthropic). Claude Code was used to write and iterate on the source code and this documentation. The OCR functionality itself relies on the pix2text model (local engine) and the Claude API (cloud engine), both of which are AI-based.
